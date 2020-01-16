@@ -1,0 +1,13 @@
+<p>Download de Arquivos</p>
+<button kendoButton (click)="reloadEvent()">Reload</button><br><br>
+<kendo-grid [data]="gridData | async" [height]="410">
+  <kendo-grid-column field="fileID" title="ID" width="40">
+  </kendo-grid-column>
+  <kendo-grid-column field="fileName" title="Name" width="250">
+  </kendo-grid-column>
+  <kendo-grid-column field="actions" title="Actions" width="80">
+      <ng-template kendoGridCellTemplate let-dataItem>
+          <button kendoButton (click)="clickEvent(dataItem)">Download</button>
+      </ng-template>
+  </kendo-grid-column>
+</kendo-grid>
