@@ -34,6 +34,7 @@ namespace TestChunkUpload.API
             services.AddCors(x => x.AddPolicy(CORS_POLICY, b => b.WithOrigins("http://localhost:4200", "localhost").AllowCredentials()));
             services.AddControllers();
             services.AddSingleton(new UploadedData());
+            services.AddSingleton(new FileData());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

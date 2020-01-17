@@ -43,7 +43,8 @@ namespace TestChunkUpload.API.Controllers
                 var filePath = Path.Combine(UPLOADS_PATH, file);
                 if (System.IO.File.Exists(filePath))
                 {
-                    return new FileContentResult(System.IO.File.ReadAllBytes(filePath), "application/octet-stream");
+                    var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                    return this.File(fileStream, "application/octet-stream");
                 }
 
                 return NotFound(new { Error = true, Message = "File doesn't exist." });
@@ -67,40 +68,34 @@ namespace TestChunkUpload.API.Controllers
         }
 
         [HttpPost("Upload")]
-        public async Task<IActionResult> PostAsync([FromForm] FormData data, [FromServices] UploadedData uploadedData, CancellationToken ct)
+        public async Task<IActionResult> PostAsync([FromForm] FormData data, CancellationToken ct)
         {
-            try
+            if (!Directory.Exists(UPLOADS_PATH)) Directory.CreateDirectory(UPLOADS_PATH);
+            var tmpFile = Path.Combine(UPLOADS_PATH, $"{data.Metadata.fileUid}.tmp");
+
+            if (data.Metadata.chunkIndex == 0)
             {
-                if (!Directory.Exists(UPLOADS_PATH)) Directory.CreateDirectory(UPLOADS_PATH);
-
-                if (data.Metadata.chunkIndex == 0)
-                {
-                    var filename = Path.GetFileName(data.Metadata.fileName);
-                    var filepath = Path.Combine(UPLOADS_PATH, filename);
-
-                    if (System.IO.File.Exists(filepath)) return BadRequest(new { Error = true, Message = "File already exists." });
-
-                    uploadedData.Add(data.Metadata.fileUid, new FileStream(filepath, FileMode.OpenOrCreate));
-                }
-
-                foreach (var file in data.Files)
-                {
-                    await file.CopyToAsync(uploadedData[data.Metadata.fileUid], ct);
-                    await uploadedData[data.Metadata.fileUid].FlushAsync();
-                }
-
-                if (data.Metadata.chunkIndex == data.Metadata.totalChunks - 1)
-                {
-                    await uploadedData[data.Metadata.fileUid].DisposeAsync();
-                    uploadedData.Remove(data.Metadata.fileUid);
-                }
-
-                return Ok();
+                if (!System.IO.File.Exists(tmpFile))
+                    await System.IO.File.Create(tmpFile).DisposeAsync();
+                else
+                    return BadRequest();
             }
-            catch (Exception ex)
+
+            foreach (var file in data.Files)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { Error = true, ex.Message, ex.InnerException });
+                using (var fileStream = new FileStream(tmpFile, FileMode.Append))
+                {
+                    await file.CopyToAsync(fileStream, ct);
+                    await fileStream.FlushAsync();
+                }
             }
+
+            if (data.Metadata.chunkIndex == data.Metadata.totalChunks - 1)
+            {
+                System.IO.File.Move(tmpFile, Path.Combine(UPLOADS_PATH, Path.GetFileName(data.Metadata.fileName)));
+            }
+
+            return Ok();
         }
 
     }
