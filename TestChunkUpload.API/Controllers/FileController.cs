@@ -25,6 +25,8 @@ namespace TestChunkUpload.API.Controllers
         {
             return await Task.Run(() =>
             {
+                if (!Directory.Exists(UPLOADS_PATH)) Directory.CreateDirectory(UPLOADS_PATH);
+
                 var id = 1;
                 var files = Directory.GetFiles(UPLOADS_PATH).Select(x => new { FileID = id++, FileName = Path.GetFileName(x) });
                 return Ok(files);
@@ -36,6 +38,8 @@ namespace TestChunkUpload.API.Controllers
         {
             return await Task.Run<IActionResult>(() =>
             {
+                if (!Directory.Exists(UPLOADS_PATH)) Directory.CreateDirectory(UPLOADS_PATH);
+
                 var filePath = Path.Combine(UPLOADS_PATH, file);
                 if (System.IO.File.Exists(filePath))
                 {
@@ -51,6 +55,8 @@ namespace TestChunkUpload.API.Controllers
         {
             return await Task.Run<IActionResult>(() =>
             {
+                if (!Directory.Exists(UPLOADS_PATH)) Directory.CreateDirectory(UPLOADS_PATH);
+
                 var filePath = Path.Combine(UPLOADS_PATH, fileNames);
                 if (System.IO.File.Exists(filePath))
                     System.IO.File.Delete(filePath);

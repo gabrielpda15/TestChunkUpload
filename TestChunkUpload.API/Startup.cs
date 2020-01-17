@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -8,8 +9,10 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using TestChunkUpload.API.Controllers;
 using TestChunkUpload.API.Models;
 
 namespace TestChunkUpload.API
@@ -37,6 +40,12 @@ namespace TestChunkUpload.API
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseCors(CORS_POLICY);
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(FileController.UPLOADS_PATH),
+                RequestPath = "/Files"                        
+            });
 
             if (env.IsDevelopment())
             {
